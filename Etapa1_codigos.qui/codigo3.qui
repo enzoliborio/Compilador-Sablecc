@@ -1,0 +1,19 @@
+/--
+  codigo3.qui
+  Foco em declaracao de funcoes de alta ordem usando assinaturas.
+--/
+
+[ numero Maximo [ numero valX | numero valY ] :
+  [
+    || < valX >> valY > = valX
+    || # = valY
+  ]
+]
+
+[ numero AplicaOperador [ numero valX | numero valY | numero Op [ numero | numero ] ] :
+  Op [ valX | valY ]
+]
+
+[ numero TestaAltaOrdem [ numero parametroBase ] :
+  AplicaOperador [ parametroBase | 0b10 | Maximo ]
+]
