@@ -4,10 +4,10 @@
   assinatura aninhada, chamada sem argumentos e uso das funcoes matematicas.
 --/
 
--- Funcao de Minimo
-[ numero Minimo [ numero valX | numero valY ] :
+-- Funcao de Maximo 
+[ numero Maximo [ numero valX | numero valY ] :
   [
-    || < valX << valY > = valX
+    || < valX >> valY > = valX
     || # = valY
   ]
 ]
@@ -32,12 +32,7 @@
   0
 ]
 
--- Funcao de alta ordem e chamadas trigonometrica
+-- Funcao de alta ordem sem repeticao de constantes locais (¨)
 [ numero TestaAltaOrdem [ numero parametroBase ] :
-  [
-    [ ¨ numero res1 [ ProcessaBinario [ parametroBase | 0b10 | Minimo ] ] ]
-    [ ¨ numero res2 [ ExecutaSemArg [ ObtemConstante ] ] ]
-    
-    < Cosseno [ res1 ] + Tangente [ res2 ] >
-  ]
+  < Cosseno [ ProcessaBinario [ parametroBase | 0b10 | Maximo ] ] + Tangente [ ExecutaSemArg [ ObtemConstante ] ] >
 ]
