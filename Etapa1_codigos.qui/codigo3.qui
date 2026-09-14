@@ -1,19 +1,43 @@
 /--
   codigo3.qui
-  Foco em declaracao de funcoes de alta ordem usando assinaturas.
+  Foco em funcoes de alta ordem personalizadas, assinaturas sem parametros,
+  assinatura aninhada, chamada sem argumentos e uso das funcoes matematicas.
 --/
 
-[ numero Maximo [ numero valX | numero valY ] :
+-- Funcao de Minimo
+[ numero Minimo [ numero valX | numero valY ] :
   [
-    || < valX >> valY > = valX
+    || < valX << valY > = valX
     || # = valY
   ]
 ]
 
-[ numero AplicaOperador [ numero valX | numero valY | numero Op [ numero | numero ] ] :
-  Op [ valX | valY ]
+-- Processa binario
+[ numero ProcessaBinario [ numero valA | numero valB | numero Operacao [ numero | numero ] ] :
+  Operacao [ valA | valB ]
 ]
 
+-- Funcao sem parametros 
+[ numero ObtemConstante [ ] :
+  Logaritmo [ 100,0 ]
+]
+
+-- Funcao que recebe uma assinatura sem parametros
+[ numero ExecutaSemArg [ numero Executador [ ] ] :
+  Executador [ ]
+]
+
+-- Assinatura aninhada (parametro_assinatura -> assinatura)
+[ numero ProcessadorAvancado [ numero SuperOp [ numero | numero Aux [ numero ] ] ] :
+  0
+]
+
+-- Funcao de alta ordem e chamadas trigonometrica
 [ numero TestaAltaOrdem [ numero parametroBase ] :
-  AplicaOperador [ parametroBase | 0b10 | Maximo ]
+  [
+    [ ¨ numero res1 [ ProcessaBinario [ parametroBase | 0b10 | Minimo ] ] ]
+    [ ¨ numero res2 [ ExecutaSemArg [ ObtemConstante ] ] ]
+    
+    < Cosseno [ res1 ] + Tangente [ res2 ] >
+  ]
 ]
