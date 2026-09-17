@@ -11,6 +11,6 @@
     [ numero valorNeg [ 0 - valorDec ] ]
     
     -- Expressao matematica complexa alterando a precedencia com ( '<' exp '>' )
-    < <valorDec + valorBin> . <valorBin - valorNeg> > / < <Seno [ valorDec ] // <2 \ 3> > ' 2>
+     <valorDec + valorBin> . <valorBin - valorNeg>  /  <Seno [ valorDec ] // <2 \ 3>  ' 2>
   ]
 ]
