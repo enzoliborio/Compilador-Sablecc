@@ -27,6 +27,6 @@
 ]
 /--
 ++ [ booleano testabooleano[ ]:
-     ValidaLogica [1|0]
+     ValidaLogica [V|F]
 ]
 --/
