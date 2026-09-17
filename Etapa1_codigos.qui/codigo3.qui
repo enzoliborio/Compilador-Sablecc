@@ -19,7 +19,7 @@
 
 -- Funcao sem parametros 
 [ numero ObtemConstante [ ] :
-  Logaritmo [ 100,0 ]
+  Logaritmo [ 100 ]
 ]
 
 -- Funcao que recebe uma assinatura sem parametros
@@ -32,7 +32,12 @@
   0
 ]
 
--- Funcao de alta ordem sem repeticao de constantes locais (¨)
+-- Funcao de alta ordem sem repeticao de constantes locais
 [ numero TestaAltaOrdem [ numero parametroBase ] :
   < Cosseno [ ProcessaBinario [ parametroBase | 0b10 | Maximo ] ] + Tangente [ ExecutaSemArg [ ObtemConstante ] ] >
+]
+
+-- Ponto de entrada obrigatorio da linguagem
+++ [ numero Principal [ ] :
+  TestaAltaOrdem [ 10 ]
 ]
