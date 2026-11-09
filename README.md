@@ -53,7 +53,7 @@ Quinas é uma linguagem funcional experimental baseada em conceitos de linguagen
 ## 📂 Estrutura do Repositório
 
 ```text
-quinas-compiler/
+Compiladores_Projeto/
 ├── src/                  # Código-fonte gerado pelo SableCC e classes Java customizadas
 ├── gramatica/            # Especificação da gramática SableCC
 │   └── grupo_14.sable    # Arquivo principal de definição sintática/léxica
