@@ -1,0 +1,251 @@
+Package quinas;
+
+/* Grupo 14 
+	ENZO LIBÓRIO FRAGA
+	JOÃO VICTOR CARVALHO SIMÕES
+	JOÃO CARLOS CRUZ SANTOS
+	MAXWELL ALEXANDRE SOUZA
+*/
+
+Helpers
+    /* Caracteres Básicos */
+    digito = ['0' .. '9'];
+    digito_bin = ['0' + '1'];
+    letra_minuscula = ['a' .. 'z'];
+    letra_maiuscula = ['A' .. 'Z'];
+    letra = letra_minuscula | letra_maiuscula;
+    
+    /* Quebras de linha e brancos */
+    cr = 13;
+    lf = 10;
+    tab = 9;
+    espaco = ' ';
+    fim_de_linha = cr | lf | (cr lf);
+    espacos = (espaco | tab | fim_de_linha)+;
+
+    /* Auxiliares para Comentários de Bloco no estilo C (não aninhados) */
+    qualquer_caractere = [0 .. 0xffff];
+    nao_traco = [qualquer_caractere - '-'];
+    nao_barra_traco = [nao_traco - '/'];
+
+Tokens
+    /* Palavras Reservadas e Tipos Primitivos */
+    numero = 'numero';
+    booleano = 'booleano';
+
+    /* Valores Booleanos */
+    val_verdadeiro = 'V';
+    val_falso = 'F';
+
+    /* Marcador de Entrada */
+    ponto_entrada = '++';
+
+    /* Delimitadores e Pontuação */
+    colchete_esq = '[';
+    colchete_dir = ']';
+    dois_pontos = ':';
+    pipe = '|';
+    igual = '=';
+    cerquilha = '#';
+    trema = 0x00a8;
+    parentese_esq = '<';
+    parentese_dir = '>';
+
+    /* Operadores Aritméticos */
+    mais = '+';
+    menos = '-';
+    ponto = '.';
+    barra = '/';
+    resto = 92; /* Uma barra invertida. */
+    div_inteira = '//';
+    potencia = '`' | 0x00b4; /* Etapa 3 e acento agudo do enunciado. */
+
+    /* Operadores Relacionais */
+    maior_que = '>>';
+    menor_que = '<<';
+    igualdade = '==';
+
+    /* Operadores Booleanos */
+    e_logico = '^';
+    nao_logico = 0x00ac;
+    ou_logico = 'v';
+    guarda_pipe = '||';
+
+    /* Identificadores e Numerais */
+    id_const = letra_maiuscula letra_maiuscula+;
+    id_funcao = letra_maiuscula letra+;
+    id = letra_minuscula letra_minuscula+;
+
+    numeral_int = (digito+) | ('0b' digito_bin+);
+    numeral_real = (digito+) ',' (digito+);
+
+    /* Ignorados (Brancos e Comentários) */
+    brancos = espacos;
+    comentario_linha = '--' [qualquer_caractere - [cr + lf]]* fim_de_linha?;
+    comentario_bloco = '/--' (nao_traco | '-' nao_traco | '--' '-'* nao_barra_traco)* '--' '-'* '/';
+
+Ignored Tokens
+    brancos,
+    comentario_linha,
+    comentario_bloco;
+
+Productions
+    programa = dec_funcao+ {-> New programa([dec_funcao])};
+
+    dec_funcao = ponto_entrada? [abre]:colchete_esq tipo id_funcao
+                 [abre_params]:colchete_esq lista_parametros [fecha_params]:colchete_dir
+                 dois_pontos corpo [fecha]:colchete_dir
+        {-> New dec_funcao(ponto_entrada, tipo, id_funcao, [lista_parametros.parametro], corpo.exp)};
+
+    corpo {-> exp} =
+        {expressao} colchete_esq exp colchete_dir {-> exp}
+      | {guarda}    guarda {-> guarda.exp};
+
+    tipo =
+        {numero}   numero   {-> New tipo.numero(numero)}
+      | {booleano} booleano {-> New tipo.booleano(booleano)};
+
+    lista_parametros {-> parametro*} =
+        {vazia} {-> []}
+      | {itens} parametro outro_parametro* {-> [parametro, outro_parametro.parametro]};
+
+    outro_parametro {-> parametro} = pipe parametro {-> parametro};
+
+    parametro =
+        {primitivo} tipo id   {-> New parametro.primitivo(tipo, id)}
+      | {funcao}    assinatura {-> New parametro.funcao(assinatura)};
+
+    assinatura = tipo id_funcao colchete_esq parametros_assinatura colchete_dir
+        {-> New assinatura(tipo, id_funcao, [parametros_assinatura.parametro_assinatura])};
+
+    parametros_assinatura {-> parametro_assinatura*} =
+        {vazia} {-> []}
+      | {itens} parametro_assinatura outro_parametro_assinatura*
+                {-> [parametro_assinatura, outro_parametro_assinatura.parametro_assinatura]};
+
+    outro_parametro_assinatura {-> parametro_assinatura} =
+        pipe parametro_assinatura {-> parametro_assinatura};
+
+    parametro_assinatura =
+        {primitivo} tipo      {-> New parametro_assinatura.primitivo(tipo)}
+      | {funcao}    assinatura {-> New parametro_assinatura.funcao(assinatura)};
+
+    /* Os niveis auxiliares fixam a precedencia e desaparecem na AST. */
+    exp =
+        {ou} exp ou_logico conjuncao {-> New exp.ou(exp, conjuncao.exp)}
+      | {base} conjuncao {-> conjuncao.exp};
+
+    conjuncao {-> exp} =
+        {e} conjuncao e_logico comparacao_igual {-> New exp.e(conjuncao.exp, comparacao_igual.exp)}
+      | {base} comparacao_igual {-> comparacao_igual.exp};
+
+    comparacao_igual {-> exp} =
+        {igual} comparacao_igual igualdade relacao {-> New exp.igualdade(comparacao_igual.exp, relacao.exp)}
+      | {base} relacao {-> relacao.exp};
+
+    relacao {-> exp} =
+        {menor} relacao menor_que soma {-> New exp.menor(relacao.exp, soma.exp)}
+      | {maior} relacao maior_que soma {-> New exp.maior(relacao.exp, soma.exp)}
+      | {base} soma {-> soma.exp};
+
+    soma {-> exp} =
+        {soma} soma mais produto {-> New exp.soma(soma.exp, produto.exp)}
+      | {subtracao} soma menos produto {-> New exp.subtracao(soma.exp, produto.exp)}
+      | {base} produto {-> produto.exp};
+
+    produto {-> exp} =
+        {multiplicacao} produto ponto unaria {-> New exp.multiplicacao(produto.exp, unaria.exp)}
+      | {divisao} produto barra unaria {-> New exp.divisao(produto.exp, unaria.exp)}
+      | {div_inteira} produto div_inteira unaria {-> New exp.div_inteira(produto.exp, unaria.exp)}
+      | {resto} produto resto unaria {-> New exp.resto(produto.exp, unaria.exp)}
+      | {base} unaria {-> unaria.exp};
+
+    unaria {-> exp} =
+        {negativo} menos unaria {-> New exp.negativo(unaria.exp)}
+      | {nao} nao_logico unaria {-> New exp.nao(unaria.exp)}
+      | {base} exponenciacao {-> exponenciacao.exp};
+
+    /* Potencia associa a direita: -2 elevado a 2 nega a potencia inteira.
+       O expoente pode ser negativo. */
+    exponenciacao {-> exp} =
+        {potencia} primaria potencia unaria {-> New exp.potencia(primaria.exp, unaria.exp)}
+      | {base} primaria {-> primaria.exp};
+
+    primaria {-> exp} =
+        {inteiro} numeral_int {-> New exp.inteiro(numeral_int)}
+      | {real} numeral_real {-> New exp.real(numeral_real)}
+      | {verdadeiro} val_verdadeiro {-> New exp.verdadeiro(val_verdadeiro)}
+      | {falso} val_falso {-> New exp.falso(val_falso)}
+      | {identificador} id {-> New exp.identificador(id)}
+      | {constante} id_const {-> New exp.constante(id_const)}
+      | {bloco} bloco_exp {-> bloco_exp.exp}
+      | {chamada} chamada {-> chamada.exp}
+      | {guarda} guarda {-> guarda.exp}
+      | {agrupada} parentese_esq exp parentese_dir {-> exp};
+
+    guarda {-> exp} = colchete_esq ramo+ guarda_pipe cerquilha igual exp colchete_dir
+        {-> New exp.guarda([ramo], exp)};
+
+    ramo = guarda_pipe [condicao]:exp igual [resultado]:exp
+        {-> New ramo(condicao, resultado)};
+
+    bloco_exp {-> exp} = colchete_esq dec_cons+ exp colchete_dir
+        {-> New exp.bloco([dec_cons], exp)};
+
+    dec_cons =
+        {completa} [abre]:colchete_esq trema tipo id id_const
+                   [abre_valor]:colchete_esq exp [fecha_valor]:colchete_dir [fecha]:colchete_dir
+                   {-> New dec_cons(tipo, id, id_const, exp)}
+      | {curta} [abre]:colchete_esq tipo id_const
+                [abre_valor]:colchete_esq exp [fecha_valor]:colchete_dir [fecha]:colchete_dir
+                {-> New dec_cons(tipo, Null, id_const, exp)};
+
+    chamada {-> exp} = id_funcao colchete_esq lista_args colchete_dir
+        {-> New exp.chamada(id_funcao, [lista_args.arg])};
+
+    lista_args {-> arg*} =
+        {vazia} {-> []}
+      | {itens} arg outro_arg* {-> [arg, outro_arg.arg]};
+
+    outro_arg {-> arg} = pipe arg {-> arg};
+
+    arg =
+        {expressao} exp {-> New arg.expressao(exp)}
+      | {funcao} id_funcao {-> New arg.funcao(id_funcao)};
+
+Abstract Syntax Tree
+    programa = [funcoes]:dec_funcao*;
+    dec_funcao = [entrada]:ponto_entrada? [retorno]:tipo [nome]:id_funcao
+                 [parametros]:parametro* [corpo]:exp;
+    tipo = {numero} numero | {booleano} booleano;
+    parametro = {primitivo} tipo [nome]:id | {funcao} assinatura;
+    assinatura = [retorno]:tipo [nome]:id_funcao [parametros]:parametro_assinatura*;
+    parametro_assinatura = {primitivo} tipo | {funcao} assinatura;
+    dec_cons = tipo [id_auxiliar]:id? [nome]:id_const [valor]:exp;
+    ramo = [condicao]:exp [resultado]:exp;
+    arg = {expressao} exp | {funcao} [nome]:id_funcao;
+
+    exp =
+        {inteiro} numeral_int
+      | {real} numeral_real
+      | {verdadeiro} val_verdadeiro
+      | {falso} val_falso
+      | {identificador} id
+      | {constante} id_const
+      | {chamada} [nome]:id_funcao [argumentos]:arg*
+      | {bloco} [declaracoes]:dec_cons* [resultado]:exp
+      | {guarda} [ramos]:ramo* [padrao]:exp
+      | {negativo} [operando]:exp
+      | {nao} [operando]:exp
+      | {potencia} [esquerda]:exp [direita]:exp
+      | {soma} [esquerda]:exp [direita]:exp
+      | {subtracao} [esquerda]:exp [direita]:exp
+      | {multiplicacao} [esquerda]:exp [direita]:exp
+      | {divisao} [esquerda]:exp [direita]:exp
+      | {div_inteira} [esquerda]:exp [direita]:exp
+      | {resto} [esquerda]:exp [direita]:exp
+      | {igualdade} [esquerda]:exp [direita]:exp
+      | {menor} [esquerda]:exp [direita]:exp
+      | {maior} [esquerda]:exp [direita]:exp
+      | {e} [esquerda]:exp [direita]:exp
+      | {ou} [esquerda]:exp [direita]:exp;
